@@ -8,6 +8,7 @@ public class InimigoController : MonoBehaviour
 
     private bool seguindoPos1 = true;
     private Rigidbody2D rb;
+    
 
     void Start()
     {
