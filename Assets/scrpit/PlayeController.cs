@@ -30,6 +30,7 @@ public class PlatformController : MonoBehaviour
 
     [Header("References")]
     [SerializeField] private Rigidbody2D rb;
+    [SerializeField] private Animator animator;
 
     [Header("Coin Settings")]
     private int coinCounter = 0;
@@ -49,6 +50,9 @@ public class PlatformController : MonoBehaviour
     {
         if (rb == null)
             rb = GetComponent<Rigidbody2D>();
+
+        if (animator == null)
+            animator = GetComponent<Animator>();
 
         inputActions = new PlayerActionMap();
         moveAction = inputActions.Player.Move;
@@ -78,14 +82,21 @@ public class PlatformController : MonoBehaviour
         // Leitura da movimentação
         moveInput = moveAction.ReadValue<Vector2>();
 
-        // Atualiza a direção que o personagem está virado (baseado na movimentação ou na escala)
+        // Atualiza a direção que o personagem está virado sem alterar o tamanho original
         if (moveInput.x != 0)
         {
             facingDirection = Mathf.Sign(moveInput.x);
+            
+            Vector3 localScale = transform.localScale;
+            localScale.x = Mathf.Abs(localScale.x) * facingDirection;
+            transform.localScale = localScale;
         }
-        else if (transform.localScale.x != 0)
+
+        // Atualiza o parâmetro "isWalk" do Animator
+        bool isWalk = moveInput.x != 0;
+        if (animator != null)
         {
-            facingDirection = Mathf.Sign(transform.localScale.x);
+            animator.SetBool("isWalk", isWalk);
         }
 
         // Se estiver no Dash, ignora verificações normais de pulo
@@ -98,7 +109,7 @@ public class PlatformController : MonoBehaviour
         if (Keyboard.current != null)
         {
             bool shiftPressed = Keyboard.current.leftShiftKey.wasPressedThisFrame || 
-                               Keyboard.current.rightShiftKey.wasPressedThisFrame;
+                                Keyboard.current.rightShiftKey.wasPressedThisFrame;
 
             if (shiftPressed && canDash)
             {
@@ -109,7 +120,6 @@ public class PlatformController : MonoBehaviour
 
     private void FixedUpdate()
     {
-        // Se estiver no meio do Dash, força a velocidade do Dash continuamente no FixedUpdate
         if (isDashing)
         {
             rb.linearVelocity = new Vector2(dashDirection * dashSpeed, 0f);
@@ -167,24 +177,17 @@ public class PlatformController : MonoBehaviour
         canDash = false;
         isDashing = true;
 
-        // Salva a gravidade original e desativa temporariamente para o dash ser retilíneo
         float originalGravity = rb.gravityScale;
         rb.gravityScale = 0f;
 
-        // Define a direção do dash no início da corrotina
         dashDirection = moveInput.x != 0 ? Mathf.Sign(moveInput.x) : facingDirection;
-
-        // Se por algum motivo a direção ainda for 0, força para a direita (1)
         if (dashDirection == 0) dashDirection = 1f;
 
-        // Espera o tempo de duração do dash (durante esse tempo, o FixedUpdate estará aplicando a velocidade)
         yield return new WaitForSeconds(dashDuration);
 
-        // Restaura gravidade e encerra o estado de dash
         rb.gravityScale = originalGravity;
         isDashing = false;
 
-        // Tempo de recarga do dash
         yield return new WaitForSeconds(dashCooldown);
         canDash = true;
     }
@@ -226,10 +229,10 @@ public class PlatformController : MonoBehaviour
     public void Die()
     {
         Destroy(gameObject);
-        ReloadCurrentScene();
+        ReloadCurrentScene0();
     }
 
-    public void ReloadCurrentScene()
+    public void ReloadCurrentScene0()
     {
         string currentSceneName = SceneManager.GetActiveScene().name;
         SceneManager.LoadSceneAsync(currentSceneName);
