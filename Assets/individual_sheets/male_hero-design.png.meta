@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: f753a2965955caa45a5ddf6a74777bda
+guid: 39009441bc56e104aa5d6f3d815cd25c
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 4170887193783831121
-    second: davi_0
+      213: -1684687934892386565
+    second: male_hero-design_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -37,7 +37,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 1
+    filterMode: 0
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -48,10 +48,10 @@ TextureImporter:
   compressionQuality: 50
   spriteMode: 2
   spriteExtrude: 1
-  spriteMeshType: 1
+  spriteMeshType: 0
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 100
+  spritePixelsToUnits: 16
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -75,7 +75,7 @@ TextureImporter:
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 1
+    textureCompression: 0
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: davi_0
+      name: male_hero-design_0
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 447
-        height: 447
+        x: 40
+        y: 47
+        width: 34
+        height: 39
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 15a06bfedc7f1e930800000000000000
-      internalID: 4170887193783831121
+      spriteID: bf65a53cf39ce98e0800000000000000
+      internalID: -1684687934892386565
       vertices: []
       indices: 
       edges: []
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      davi_0: 4170887193783831121
+      male_hero-design_0: -1684687934892386565
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

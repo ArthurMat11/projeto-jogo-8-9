@@ -1,3 +1,4 @@
+
 using System.Collections;
 using TMPro;
 using UnityEngine;
@@ -18,11 +19,11 @@ public class PlatformController : MonoBehaviour
     public float dashSpeed = 25f;
     public float dashDuration = 0.15f;
     public float dashCooldown = 1f;
-    
+
     private bool canDash = true;
     private bool isDashing;
     private float dashDirection = 1f;
-    private float facingDirection = 1f; // 1 = direita, -1 = esquerda
+    private float facingDirection = 1f;
 
     [Header("Ground Check")]
     [SerializeField] private Transform groundCheckPoint;
@@ -30,6 +31,12 @@ public class PlatformController : MonoBehaviour
 
     [Header("References")]
     [SerializeField] private Rigidbody2D rb;
+    [SerializeField] private Animator animator;
+    [SerializeField] private SpriteRenderer spriteRenderer;
+
+    [Header("Animation Settings")]
+    [SerializeField] private string walkingParameter = "isWalking";
+    [SerializeField] private string onGroundParameter = "OnGround";
 
     [Header("Coin Settings")]
     private int coinCounter = 0;
@@ -49,6 +56,12 @@ public class PlatformController : MonoBehaviour
     {
         if (rb == null)
             rb = GetComponent<Rigidbody2D>();
+
+        if (animator == null)
+            animator = GetComponentInChildren<Animator>();
+
+        if (spriteRenderer == null)
+            spriteRenderer = GetComponentInChildren<SpriteRenderer>();
 
         inputActions = new PlayerActionMap();
         moveAction = inputActions.Player.Move;
@@ -75,30 +88,39 @@ public class PlatformController : MonoBehaviour
 
     private void Update()
     {
-        // Leitura da movimentação
+        // Leitura da movimentacao
         moveInput = moveAction.ReadValue<Vector2>();
 
-        // Atualiza a direção que o personagem está virado (baseado na movimentação ou na escala)
-        if (moveInput.x != 0)
+        // Atualiza a direcao do personagem
+        if (moveInput.x > 0.01f)
         {
-            facingDirection = Mathf.Sign(moveInput.x);
+            facingDirection = 1f;
+            FlipPlayer(false);
         }
-        else if (transform.localScale.x != 0)
+        else if (moveInput.x < -0.01f)
         {
-            facingDirection = Mathf.Sign(transform.localScale.x);
+            facingDirection = -1f;
+            FlipPlayer(true);
         }
 
-        // Se estiver no Dash, ignora verificações normais de pulo
-        if (isDashing) return;
-
+        // Verifica se o personagem esta no chao
         CheckGrounded();
+
+        // Atualiza as animacoes
+        UpdateAnimations();
+
+        // Durante o dash, ignora as verificacoes restantes
+        if (isDashing)
+            return;
+
         ApplyJumpPhysics();
 
-        // Leitura do teclado para o Dash
+        // Teclas de dash
         if (Keyboard.current != null)
         {
-            bool shiftPressed = Keyboard.current.leftShiftKey.wasPressedThisFrame || 
-                               Keyboard.current.rightShiftKey.wasPressedThisFrame;
+            bool shiftPressed =
+                Keyboard.current.leftShiftKey.wasPressedThisFrame ||
+                Keyboard.current.rightShiftKey.wasPressedThisFrame;
 
             if (shiftPressed && canDash)
             {
@@ -107,16 +129,41 @@ public class PlatformController : MonoBehaviour
         }
     }
 
+    private void FlipPlayer(bool faceLeft)
+    {
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.flipX = faceLeft;
+        }
+    }
+
     private void FixedUpdate()
     {
-        // Se estiver no meio do Dash, força a velocidade do Dash continuamente no FixedUpdate
+        // Movimento do dash
         if (isDashing)
         {
-            rb.linearVelocity = new Vector2(dashDirection * dashSpeed, 0f);
+            rb.linearVelocity = new Vector2(
+                dashDirection * dashSpeed,
+                0f
+            );
+
             return;
         }
 
         MovePlayer();
+    }
+
+    private void UpdateAnimations()
+    {
+        if (animator == null)
+            return;
+
+        // Ativa a caminhada ao pressionar uma direcao horizontal
+        bool walking = Mathf.Abs(moveInput.x) > 0.01f;
+
+        // Atualiza os parametros do Animator
+        animator.SetBool(walkingParameter, walking);
+        animator.SetBool(onGroundParameter, isGrounded);
     }
 
     private void CheckGrounded()
@@ -128,6 +175,7 @@ public class PlatformController : MonoBehaviour
                 groundCheckRadius,
                 groundLayer
             );
+
             isGrounded = colliders.Length > 0;
         }
         else
@@ -138,6 +186,7 @@ public class PlatformController : MonoBehaviour
                 1.1f,
                 groundLayer
             );
+
             isGrounded = hit.collider != null;
         }
     }
@@ -154,11 +203,17 @@ public class PlatformController : MonoBehaviour
     {
         if (rb.linearVelocity.y < 0)
         {
-            rb.linearVelocity += Vector2.up * Physics2D.gravity.y * (fallMultiplier - 1) * Time.deltaTime;
+            rb.linearVelocity += Vector2.up *
+                Physics2D.gravity.y *
+                (fallMultiplier - 1) *
+                Time.deltaTime;
         }
         else if (rb.linearVelocity.y > 0 && !isJumping)
         {
-            rb.linearVelocity += Vector2.up * Physics2D.gravity.y * (lowJumpMultiplier - 1) * Time.deltaTime;
+            rb.linearVelocity += Vector2.up *
+                Physics2D.gravity.y *
+                (lowJumpMultiplier - 1) *
+                Time.deltaTime;
         }
     }
 
@@ -167,25 +222,30 @@ public class PlatformController : MonoBehaviour
         canDash = false;
         isDashing = true;
 
-        // Salva a gravidade original e desativa temporariamente para o dash ser retilíneo
+        // Salva a gravidade original
         float originalGravity = rb.gravityScale;
         rb.gravityScale = 0f;
 
-        // Define a direção do dash no início da corrotina
-        dashDirection = moveInput.x != 0 ? Mathf.Sign(moveInput.x) : facingDirection;
+        // Define a direcao do dash
+        dashDirection = moveInput.x != 0
+            ? Mathf.Sign(moveInput.x)
+            : facingDirection;
 
-        // Se por algum motivo a direção ainda for 0, força para a direita (1)
-        if (dashDirection == 0) dashDirection = 1f;
+        if (dashDirection == 0)
+            dashDirection = 1f;
 
-        // Espera o tempo de duração do dash (durante esse tempo, o FixedUpdate estará aplicando a velocidade)
+        // Vira o personagem na direcao do dash
+        FlipPlayer(dashDirection < 0);
+
         yield return new WaitForSeconds(dashDuration);
 
-        // Restaura gravidade e encerra o estado de dash
+        // Restaura a gravidade
         rb.gravityScale = originalGravity;
         isDashing = false;
 
-        // Tempo de recarga do dash
+        // Tempo de recarga
         yield return new WaitForSeconds(dashCooldown);
+
         canDash = true;
     }
 
@@ -193,7 +253,11 @@ public class PlatformController : MonoBehaviour
     {
         if (isGrounded && !isDashing)
         {
-            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
+            rb.linearVelocity = new Vector2(
+                rb.linearVelocity.x,
+                jumpForce
+            );
+
             isJumping = true;
         }
     }
@@ -205,22 +269,30 @@ public class PlatformController : MonoBehaviour
 
     private void OnDrawGizmosSelected()
     {
+        Gizmos.color = isGrounded ? Color.green : Color.red;
+
         if (groundCheckPoint != null)
         {
-            Gizmos.color = isGrounded ? Color.green : Color.red;
-            Gizmos.DrawWireSphere(groundCheckPoint.position, groundCheckRadius);
+            Gizmos.DrawWireSphere(
+                groundCheckPoint.position,
+                groundCheckRadius
+            );
         }
         else
         {
-            Gizmos.color = isGrounded ? Color.green : Color.red;
-            Gizmos.DrawRay(transform.position, Vector2.down * 1.1f);
+            Gizmos.DrawRay(
+                transform.position,
+                Vector2.down * 1.1f
+            );
         }
     }
 
     public void ChangeTextCoin()
     {
         coinCounter += 1;
-        if (coinText != null) coinText.text = coinCounter.ToString();
+
+        if (coinText != null)
+            coinText.text = coinCounter.ToString();
     }
 
     public void Die()
@@ -231,7 +303,9 @@ public class PlatformController : MonoBehaviour
 
     public void ReloadCurrentScene()
     {
-        string currentSceneName = SceneManager.GetActiveScene().name;
+        string currentSceneName =
+            SceneManager.GetActiveScene().name;
+
         SceneManager.LoadSceneAsync(currentSceneName);
     }
 }
